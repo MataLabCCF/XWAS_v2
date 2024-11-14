@@ -1,3 +1,109 @@
+import os
+
+def modelSelection(covar, modelSelection, folder, name, logFile):
+    commandLine = f"Rscript {modelSelection} {covar} {folder}/{name}"
+
+    covarFile = open(covar)
+    for line in covarFile:
+        allCovar = line.strip().split()
+        break
+
+    print("All covar in the covar file")
+    print(allCovar)
+
+    os.system(commandLine)
+    logFile.write("Command line:\n")
+    logFile.write(f"\t{commandLine}:\n")
+    logFile.write(f"\n")
+    logFile.write("=================================================================================================\n")
+
+    print(f"Opening the file {folder}/{name}_variables.tsv")
+    fileModel = open(f"{folder}/{name}_variables.tsv")
+
+    model = []
+    for line in fileModel:
+        covarName = line.strip()
+        if covarName in allCovar:
+            print(f"Covar {covarName} being added")
+            model.append(covarName)
+        else:
+            print(f"Covar {covarName} not present in the original covar list")
+            for cov in allCovar:
+                if cov in covarName:
+                    print(f"\tCovar {covarName} is probably the changed version of {cov}")
+                    if cov not in model:
+                        print(f"\tCovar {cov} is added")
+                        model.append(cov)
+
+    print(f"Return the model: {model}")
+    return model
+
+
+def buildCovarFile(covarDict, outlier, PCList, PCASource, bfile, folder, name):
+    outlierList = []
+
+    outlierFile = open(outlier)
+    for line in outlierFile:
+        IID, FID = line.strip().split()
+        outlierList.append(IID)
+    outlierFile.close()
+
+    covarList = []
+    famFile = open(f"{bfile}.fam")
+    covarFile = open(f"{folder}/{name}.tsv", "w")
+
+    #Header -> IID <covar non PC> <Covar PC in Source_PCNumber format>
+    covarFile.write("IID")
+    for ind in covarDict:
+        for covar in covarDict[ind]:
+            if covar != "PCA":
+                covarFile.write(f"\t{covar}")
+                covarList.append(covar)
+        break
+    for source in PCASource:
+        for PC in PCList:
+            covarFile.write(f"\t{source}_{PC}")
+    covarFile.write("\n")
+
+    for line in famFile:
+        FID, IID, mother, father, sex, pheno = line.strip().split()
+        if IID not in outlierList and IID in covarDict:
+            covarFile.write(f"{IID}")
+            for covar in covarList:
+                covarFile.write(f"\t{covarDict[IID][covar]}")
+            for source in PCASource:
+                for PC in PCList:
+                    covarFile.write(f"\t{covarDict[IID]['PCA'][source][PC]}")
+            covarFile.write("\n")
+    covarFile.close()
+    famFile.close()
+    return f"{folder}/{name}.tsv"
+
+def addPCAToCovarDict(filePCA, covarDict, dataSource):
+    for ind in covarDict:
+        #print(f"For error: {covarDict[ind]}")
+        if "PCA" not in covarDict[ind]:
+            covarDict[ind]["PCA"] = {}
+        if dataSource not in covarDict[ind]["PCA"]:
+            covarDict[ind]["PCA"][dataSource] = {}
+
+    file = open(f"{filePCA}.proj.eigenvec")
+
+    #Project PCA has no header, while the previous PCA had
+    PCList = []
+
+    for line in file:
+        data = line.strip().split("\t")
+        ind = data[0]
+        if ind in covarDict:
+            for i in range(2, len(data)):
+                PC = f"PC{i-1}"
+                if PC not in PCList:
+                    PCList.append(PC)
+                covarDict[ind]["PCA"][dataSource][PC] = data[i]
+
+
+    return covarDict, PCList
 
 
 
