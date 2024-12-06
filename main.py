@@ -101,8 +101,8 @@ if __name__ == '__main__':
         bfileMaleMerged, targetMaleCommon, refMaleCommon = mergeRefAndTarget(bfileMale, bfileMaleRef, args.folder,f"{args.name}_Male_LD", args.plink1, logFile)
         targetMaleLD, refMaleLD = removeLDAndMAFToPCA(bfileMaleMerged, targetMaleCommon, refMaleCommon, args.folder, f"{args.name}_Male_LD", args.plink1, logFile)
 
-        XPCAFemale = getProjectedPCA(targetFemaleCommon, refFemaleCommon, args.gcta, True, args.threads, "XPCA_Female", args.folder, args.plink1, logFile)
-        XPCAMale = getProjectedPCA(targetMaleCommon, refMaleCommon, args.gcta, True, args.threads, "XPCA_Male", args.folder, args.plink1, logFile)
+        XPCAFemale = getProjectedPCA(targetFemaleLD, refFemaleLD, args.gcta, True, args.threads, "XPCA_Female", args.folder, args.plink1, logFile)
+        XPCAMale = getProjectedPCA(targetMaleLD, refMaleLD, args.gcta, True, args.threads, "XPCA_Male", args.folder, args.plink1, logFile)
 
         PCASource.append("XPCA_WR")
 
@@ -113,7 +113,7 @@ if __name__ == '__main__':
         bfileMerged, targetCommon, refCommon = mergeRefAndTarget(args.autosomal, args.AutosomalRef, args.folder, f"{args.name}_AutosomalPCA", args.plink1, logFile)
         targetLD, refLD = removeLDAndMAFToPCA(bfileMerged, targetCommon, refCommon, args.folder, f"{args.name}_Male_LD", args.plink1, logFile)
 
-        autosomalPCA = getProjectedPCA(targetCommon, refCommon, args.gcta, False, args.threads, "AutosomalPCA", args.folder, args.plink1, logFile)
+        autosomalPCA = getProjectedPCA(targetLD, refLD, args.gcta, False, args.threads, "AutosomalPCA", args.folder, args.plink1, logFile)
 
         PCASource.append("Autosomal_WR")
 
