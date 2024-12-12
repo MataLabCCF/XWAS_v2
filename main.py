@@ -7,6 +7,7 @@ from Handlers.COVAR import *
 from Handlers.PLINK1 import *
 from Handlers.PLINK2 import *
 
+
 def createFolder(folder, log=True):
     if not os.path.exists(folder):
         os.mkdir(folder)
@@ -19,6 +20,37 @@ def finish(message, logFile):
     logFile.write(message)
     sys.exit(message)
 
+
+def getPCANonProjected(bfile, runPCA, folder, plink1, logFile):
+    print(f"We will run X-PCA without reference")
+    PCA = getPCA(bfile, runPCA, "PCA_Autosomal", folder, plink1, logFile)
+    return PCA
+
+
+def getXPCANonProjected(bfileFemale, bfileMale, runPCA, folder, plink1, logFile):
+    print(f"We will run X-PCA without reference")
+    XPCAFemale = getPCA(bfileFemale, runPCA, "XPCA_Female", folder, plink1, logFile)
+    XPCAMale = getPCA(bfileMale, runPCA, "XPCA_Male", folder, plink1, logFile)
+
+    return XPCAFemale, XPCAMale
+
+
+def mergeAndGetProjectedPCA(bfileTarget, bfileRef, folder, name, type, plink1, gcta, threads, X, logFile):
+    nameOut = f"{name}_{type}"
+    bfileMerged, targetCommon, refCommon = mergeRefAndTarget(bfileTarget, bfileRef, folder, nameOut, plink1, logFile)
+    targetLD, refLD = removeLDAndMAFToPCA(bfileMerged, targetCommon, refCommon, folder, nameOut, plink1, logFile)
+    return getProjectedPCA(targetLD, refLD, gcta, X, threads, type, folder, plink1, logFile)
+
+
+def getXPCAProjected(XRef, bfileFemale, bfileMale, gcta, folder, name, plink1, threads, logFile):
+    print(f"Spliting the reference data {XRef} using the PLINK impute-sex")
+    bfileMaleRef, bfileFemaleRef = separateGenotypedDataBySexWithoutCovar(XRef, f"{name}_RefX", folder, plink1, logFile)
+    XPCAFemale = mergeAndGetProjectedPCA(bfileFemale, bfileFemaleRef, folder, name, "XPCA_Female", plink1, gcta,
+                                         threads, True, logFile)
+    XPCAMale = mergeAndGetProjectedPCA(bfileMale, bfileMaleRef, folder, name, "XPCA_Male", plink1, gcta, threads, True,
+                                       logFile)
+
+    return XPCAFemale, XPCAMale
 
 
 # Differences from XWAS v1 and XWAS v2
@@ -35,13 +67,16 @@ if __name__ == '__main__':
     data.add_argument('-t', '--tableCovar', help='File with covariatives to be added to the model', required=True)
     data.add_argument('-i', '--imputed', help='Imputed file name', required=False)
     data.add_argument('-c', '--continuos', help='Set as continuos phenotype (use beta, not OR)', required=False,
-                      action = "store_true", default = False)
+                      action="store_true", default=False)
     data.add_argument('--threads', help='Number of processors to be used (default = 1)',
-                      required=False, default = 1)
+                      required=False, default=1)
 
     refData = parser.add_argument_group("Reference data arguments")
-    refData.add_argument('-r', '--XRef', help='Data with parental reference data to run XPCA (optional)', required=False, default="")
-    refData.add_argument('-R', '--AutosomalRef', help='Data with parental reference data to run autosomal PCA (optional)', required=False, default="")
+    refData.add_argument('-r', '--XRef', help='Data with parental reference data to run XPCA (optional)',
+                         required=False, default="")
+    refData.add_argument('-R', '--AutosomalRef',
+                         help='Data with parental reference data to run autosomal PCA (optional)', required=False,
+                         default="")
 
     output = parser.add_argument_group("Output arguments")
     output.add_argument('-n', '--name', help='Analysis name', required=True)
@@ -49,12 +84,18 @@ if __name__ == '__main__':
 
     pcaArg = parser.add_argument_group("PCA arguments")
     pcaArg.add_argument('--model', help='Regression model. If you do not provide a model the script will'
-                                        'use the selectModel.R to build the model', required=False, default="", nargs="+")
+                                        'use the selectModel.R to build the model', required=False, default="",
+                        nargs="+")
+    pcaArg.add_argument('--PCA', help='PCA to be calculated and used. (default = 1) \n'
+                                      '1- X-PCA\n2- Projected X-PCA\n3- Autosomal PCA\n4- Projected autosomal PCA\n'
+                                      '5- X-PCA + Autosomal PA\n 6- Projected X-PAS + Projected Autosomal\n',
+                        required=False, default="1")
 
     regressionArg = parser.add_argument_group("Regression arguments")
-    regressionArg.add_argument('--rsquare', help='R2 imputation cutoff to regression (default = 0.8)', required=False, default= 0.8)
+    regressionArg.add_argument('--rsquare', help='R2 imputation cutoff to regression (default = 0.8)', required=False,
+                               default=0.8)
     regressionArg.add_argument('--firth', help='Force PLINK2 firth regression (default Plink2 will decide)',
-                               required=False, default = False, action = "store_true")
+                               required=False, default=False, action="store_true")
 
     programs = parser.add_argument_group("Programs")
     programs.add_argument('--gwama', help='GWAMA program (default = gwama)', required=False, default="gwama")
@@ -79,45 +120,41 @@ if __name__ == '__main__':
 
     PCASource = []
 
-    if args.XRef == "" and args.AutosomalRef == "":
-        print(f"We will run X-PCA without reference")
-        XPCAFemale = getPCA(bfileFemale, args.runPCA, "XPCA_Female", args.folder, args.plink1, logFile)
-        XPCAMale = getPCA(bfileMale, args.runPCA, "XPCA_Male", args.folder, args.plink1, logFile)
+    if args.PCA == "1" or args.PCA == "5":
+        XPCAFemale, XPCAMale = getXPCANonProjected(bfileFemale, bfileMale, args.runPCA, args.folder, args.plink1,
+                                                   logFile)
+        PCASource.append("XPCA")
 
-        PCASource.append("XPCA_NR")
+        covarDict, PCList = addPCAToCovarDict(XPCAFemale, covarDict, "XPCA")
+        covarDict, PCList = addPCAToCovarDict(XPCAMale, covarDict, "XPCA")
+    if args.PCA == "2" or args.PCA == "6":
+        if args.XRef != "":
+            XPCAFemale, XPCAMale = getXPCAProjected(args.XRef, bfileFemale, bfileMale, args.gcta, args.folder,
+                                                    args.name, args.plink1, args.threads, logFile)
+            PCASource.append("XPCA_Projected")
 
-        covarDict, PCList = addPCAToCovarDict(XPCAFemale, covarDict, "XPCA_NR")
-        covarDict, PCList = addPCAToCovarDict(XPCAMale, covarDict, "XPCA_NR")
+            covarDict, PCList = addPCAToCovarDict(XPCAFemale, covarDict, "XPCA_Projected")
+            covarDict, PCList = addPCAToCovarDict(XPCAMale, covarDict, "XPCA_Projected")
+        else:
+            finish(f"The PCA option 2 requires the XRef file")
 
+    if args.PCA == "3" or args.PCA == "5":
+        autosomalPCA = getPCANonProjected(args.autosomal, args.runPCA, args.folder, args.plink1, logFile)
 
-    if args.XRef != "":
-        print(f"Spliting the reference data {args.XRef} using the PLINK impute-sex")
-        bfileMaleRef, bfileFemaleRef = separateGenotypedDataBySexWithoutCovar(args.XRef, f"{args.name}_RefX",
-                                                                              args.folder, args.plink1, logFile)
+        PCASource.append("AutosomalPCA")
+        covarDict, PCList = addPCAToCovarDict(autosomalPCA, covarDict, "AutosomalPCA")
 
-        bfileFemaleMerged, targetFemaleCommon, refFemaleCommon = mergeRefAndTarget(bfileFemale, bfileFemaleRef, args.folder,f"{args.name}_Female_XPCA", args.plink1, logFile)
-        targetFemaleLD, refFemaleLD = removeLDAndMAFToPCA(bfileFemaleMerged, targetFemaleCommon, refFemaleCommon, args.folder,f"{args.name}_Female_XPCA", args.plink1, logFile)
+    if args.PCA == "4" or args.PCA == "6":
+        if args.AutosomalRef != "":
+            autosomalPCA = mergeAndGetProjectedPCA(args.autosomal, args.AutosomalRef, args.folder, args.name,
+                                                   "PCA_Projected", args.plink1, args.gcta, args.threads,
+                                                   False, logFile)
 
-        bfileMaleMerged, targetMaleCommon, refMaleCommon = mergeRefAndTarget(bfileMale, bfileMaleRef, args.folder,f"{args.name}_Male_LD", args.plink1, logFile)
-        targetMaleLD, refMaleLD = removeLDAndMAFToPCA(bfileMaleMerged, targetMaleCommon, refMaleCommon, args.folder, f"{args.name}_Male_LD", args.plink1, logFile)
+            PCASource.append("AutosomalPCA_Projected")
+            covarDict, PCList = addPCAToCovarDict(autosomalPCA, covarDict, "AutosomalPCA_Projected")
+        else:
+            finish(f"The PCA option 4 requires the AutosomalRef file")
 
-        XPCAFemale = getProjectedPCA(targetFemaleLD, refFemaleLD, args.gcta, True, args.threads, "XPCA_Female", args.folder, args.plink1, logFile)
-        XPCAMale = getProjectedPCA(targetMaleLD, refMaleLD, args.gcta, True, args.threads, "XPCA_Male", args.folder, args.plink1, logFile)
-
-        PCASource.append("XPCA_WR")
-
-        covarDict, PCList = addPCAToCovarDict(XPCAFemale, covarDict, "XPCA_WR")
-        covarDict, PCList = addPCAToCovarDict(XPCAMale, covarDict, "XPCA_WR")
-
-    if args.AutosomalRef != "":
-        bfileMerged, targetCommon, refCommon = mergeRefAndTarget(args.autosomal, args.AutosomalRef, args.folder, f"{args.name}_AutosomalPCA", args.plink1, logFile)
-        targetLD, refLD = removeLDAndMAFToPCA(bfileMerged, targetCommon, refCommon, args.folder, f"{args.name}_Male_LD", args.plink1, logFile)
-
-        autosomalPCA = getProjectedPCA(targetLD, refLD, args.gcta, False, args.threads, "AutosomalPCA", args.folder, args.plink1, logFile)
-
-        PCASource.append("Autosomal_WR")
-
-        covarDict, PCList = addPCAToCovarDict(autosomalPCA, covarDict, "Autosomal_WR")
 
     if args.model:
         PCList = []
@@ -130,8 +167,10 @@ if __name__ == '__main__':
     femaleOutlierList = createOutlierList(covarDict, bfileFemale, PCASource, PCList, args.folder, f"{args.name}_Female")
     maleOutlierList = createOutlierList(covarDict, bfileMale, PCASource, PCList, args.folder, f"{args.name}_Male")
 
-    covarMale = buildCovarFile(covarDict, maleOutlierList, PCList, PCASource, bfileMale, args.folder, f"{args.name}_covarMale")
-    covarFemale = buildCovarFile(covarDict, femaleOutlierList, PCList, PCASource, bfileFemale, args.folder, f"{args.name}_covarFemale")
+    covarMale = buildCovarFile(covarDict, maleOutlierList, PCList, PCASource, bfileMale, args.folder,
+                               f"{args.name}_covarMale")
+    covarFemale = buildCovarFile(covarDict, femaleOutlierList, PCList, PCASource, bfileFemale, args.folder,
+                                 f"{args.name}_covarFemale")
 
     if not args.model:
         modelMale = modelSelection(covarMale, args.selectModel, args.folder, f"{args.name}_Male_model", logFile)
@@ -147,6 +186,5 @@ if __name__ == '__main__':
     regressionFemale = runRegressionPlink2(pvarFileFemale, covarFemale, modelFemale, args.rsquare, args.firth,
                                            args.threads, args.plink2, args.folder, f"{args.name}_RegFemale", logFile)
 
-
     gwamaMetaAnalysis(regressionFemale, regressionMale, pvarFileFemale, pvarFileMale, args.firth,
-                                       args.plink2, args.name, args.folder, args.gwama, logFile)
+                      args.plink2, args.name, args.folder, args.gwama, logFile)

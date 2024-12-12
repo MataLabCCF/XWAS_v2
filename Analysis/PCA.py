@@ -82,7 +82,7 @@ def getProjectedPCA(target, reference, gcta, X, threads, name, folder, plink1, l
         command = f"{command} --autosome"
     execute(command, logFile)
 
-    return f"{folder}/{name}_TargetPC"
+    return f"{folder}/{name}_TargetPC.proj.eigenvec"
 
 def getPCA(bfile, PCA, name, folder, plink1, logFile):
     fileNonLD = removeLD(bfile, name, folder, plink1, logFile)

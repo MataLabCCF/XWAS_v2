@@ -87,7 +87,7 @@ def addPCAToCovarDict(filePCA, covarDict, dataSource):
         if dataSource not in covarDict[ind]["PCA"]:
             covarDict[ind]["PCA"][dataSource] = {}
 
-    file = open(f"{filePCA}.proj.eigenvec")
+    file = open(f"{filePCA}")
 
     #Project PCA has no header, while the previous PCA had
     PCList = []
