@@ -1,5 +1,22 @@
 import os
 import sys
+import shutil
+from pathlib import Path
+
+def removeOutlier(plinkFile, outlierList, folder, sex, plink1, logFile):
+    famFile = open(f"{plinkFile}.fam")
+    toRemove = open(f"outlierList.txt", "w")
+
+    for line in famFile:
+        split = line.strip().split()
+        ID = split[1]
+        if ID in outlierList:
+            toRemove.write(f"{split[0]}\t{split[1]}\n")
+    famFile.close()
+    toRemove.close()
+    command = f"{plink1} --bfile {plinkFile} --remove outlierList.txt --make-bed --out {folder}/NonOutlier_{sex}"
+    executePlink1(command, "in", f"{folder}/NonOutlier_{sex}", logFile)
+
 
 def removeLDAndMAFToPCA(merged, target, ref, folder, name, plink1, logFile):
     outputPrefix = f"{folder}/{name}"
@@ -81,27 +98,34 @@ def separateGenotypedDataBySex(genotyped, covarDict, name, folder, plink1, logFi
 
     extractFileFemale = f"{folder}/{name}_Female_toExtract.txt"
     extractFileMale = f"{folder}/{name}_Male_toExtract.txt"
+    extractFileBoth = f"{folder}/{name}_Both_toExtract.txt"
 
     fileMale = open(extractFileMale, "w")
     fileFemale = open(extractFileFemale, "w")
+    fileBoth = open(extractFileBoth, "w")
 
     for sample in covarDict:
         if covarDict[sample]["SEX"] == "1":
             fileMale.write(f"{sample} {sample}\n")
         if covarDict[sample]["SEX"] == "2":
             fileFemale.write(f"{sample} {sample}\n")
+        fileBoth.write(f"{sample} {sample}\n")
+
 
     fileMale.close()
+    fileBoth.close()
     fileFemale.close()
 
     bfileFemale = extractSamples(bfile, extractFileFemale, f"{name}_Female", folder, plink1, logFile)
     bfileMale = extractSamples(bfile, extractFileMale, f"{name}_Male", folder, plink1, logFile)
+    bfileBoth = extractSamples(bfile, extractFileBoth, f"{name}_Both", folder, plink1, logFile)
 
-    return bfileFemale, bfileMale
+    return bfileFemale, bfileMale, bfileBoth
 
 def separateGenotypedDataBySexWithoutCovar(genotyped, name, folder, plink1, logFile):
     print("To reference file to PCA we will infer the sex using PLINK --impute-sex\n")
 
+    bfile = genotyped
     if genotyped.endswith("vcf") or genotyped.endswith("vcf.gz"):
         bfile = convertVCFToBfile(genotyped, f'{name}_toExtractSex', folder, plink1, logFile)
     #else:
@@ -137,16 +161,17 @@ def separateGenotypedDataBySexWithoutCovar(genotyped, name, folder, plink1, logF
 def mergeRefAndTarget(bfileTarget, bfileRef, folder, name, plink1, logFile):
     print(f"Merging reference and target")
 
-    os.system(f"mkdir {folder}/{name}_MergeRefAlt")
+    Path(f"{folder}/{name}_MergeRefAlt").mkdir(parents=True, exist_ok=True)
+    #os.mkdir(f"{folder}/{name}_MergeRefAlt")
 
     command = f"{plink1} --bfile {bfileTarget} --make-bed --out {folder}/{name}_MergeRefAlt/TargetMAF --maf 0.01"
     executePlink1(command, "bfile", f"{folder}/{name}_MergeRefAlt/TargetMAF", logFile)
-    os.system(f"cp {folder}/{name}_MergeRefAlt/TargetMAF.bed {folder}/{name}_MergeRefAlt/TargetMAFID.bed")
-    os.system(f"cp {folder}/{name}_MergeRefAlt/TargetMAF.fam {folder}/{name}_MergeRefAlt/TargetMAFID.fam")
+    shutil.copy2(f"{folder}/{name}_MergeRefAlt/TargetMAF.bed",f"{folder}/{name}_MergeRefAlt/TargetMAFID.bed")
+    shutil.copy2(f"{folder}/{name}_MergeRefAlt/TargetMAF.fam", f"{folder}/{name}_MergeRefAlt/TargetMAFID.fam")
 
 
-    os.system(f"cp {bfileRef}.bed {folder}/{name}_MergeRefAlt/Ref.bed")
-    os.system(f"cp {bfileRef}.fam {folder}/{name}_MergeRefAlt/Ref.fam")
+    shutil.copy2(f"{bfileRef}.bed", f"{folder}/{name}_MergeRefAlt/Ref.bed")
+    shutil.copy2(f"{bfileRef}.fam", f"{folder}/{name}_MergeRefAlt/Ref.fam")
 
 
     print(f"Changing the bim ID for target file")

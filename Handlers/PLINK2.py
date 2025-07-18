@@ -28,18 +28,10 @@ def getUpdateSexFile(fileName, folder, name,covarDict):
 
 
 
-def convertVCFToPFile(VCF, bfile, outlier, covarDict, name, folder, plink2, logFile):
+def convertVCFToPFile(VCF, bfile, covarDict, name, folder, plink2, logFile):
     #Geting the update sex file to PLINK2.
     #This update sex is the most annoying thing
     updateSexFile = getUpdateSexFile(VCF, folder, name, covarDict)
-
-    outlierFile = open(outlier)
-    outlierList = []
-
-    #Get the outlier list to remove
-    for line in outlierFile:
-        FID, IID = line.strip().split()
-        outlierList.append(IID)
 
     #Get the sample list without outliers to keep from imputed data
     famFile = open(f"{bfile}.fam")
@@ -47,10 +39,8 @@ def convertVCFToPFile(VCF, bfile, outlier, covarDict, name, folder, plink2, logF
     toKeepFile = open(toKeepName, "w")
     for line in famFile:
         FID, IID, mother, father, sex, pheno = line.strip().split()
-        if IID not in outlierList:
-            toKeepFile.write(f"{IID}\n")
+        toKeepFile.write(f"{IID}\n")
 
-    outlierFile.close()
     toKeepFile.close()
 
     #Conversion
@@ -59,10 +49,6 @@ def convertVCFToPFile(VCF, bfile, outlier, covarDict, name, folder, plink2, logF
                    f"--update-sex {updateSexFile}")
 
     executePlink2(commandLine, "pfile", outputPrefix, logFile)
-
-    os.system(f"mkdir {folder}/BackPFile")
-    #os.system()
-
 
     return outputPrefix
 

@@ -1,6 +1,5 @@
 import os
 
-
 def prepareInputGWAMA(regression, pfile, isFirth, plink2, name, folder):
     dictID = {}
     pvarFile = open(f'{pfile}.pvar')
@@ -102,34 +101,17 @@ def gwamaMetaAnalysis(regressionFemale, regressionMale, pvarFileFemale, pvarFile
 
     execute(f"{gwama} -i {folder}/inputGWAMA.in -o {folder}/{name} -r -gc --sex", logFile)
 
-def runRegressionPlink2(pvar, covarFile, model, rsquare, firth, threads, plink2, folder, name, logFile):
-    covarName = " ".join(model)
-
-    covarIn = open(covarFile)
-    phenoName = f"{folder}/{name}_pheno.txt"
-    phenoFile = open(phenoName, "w")
-    phenoFile.write("IID\tDISEASE\n")
-
-    header = True
-    for line in covarIn:
-        if header:
-            headerData = line.strip().split()
-            for i in range(0, len(headerData)):
-                if headerData[i] == "DISEASE":
-                    diseaseCol = i
-            header = False
-        else:
-            covarData = line.strip().split()
-            phenoFile.write(f"{covarData[0]}\t{covarData[diseaseCol]}\n")
-    phenoFile.close()
-
-    os.system(f"mkdir {folder}/Results")
+def runRegressionPlink2(pvar, covarFile, model, rsquare, firth, phenoName, threads, plink2, folder, name, modelSelection, logFile):
+    if model == "":
+        model = stepwiseSelection(covarFile, phenoName, folder, name, modelSelection, included="AGE+SEX")
+    covarName = model.replace(",", " ")
 
     outputPrefix = f"{folder}/Results/{name}"
 
-    command = (f"{plink2} --pfile {pvar} --pheno-name DISEASE --covar-variance-standardize --ci 0.95 --covar {covarFile} "
-               f"--covar-name {covarName} --extract-if-info \"R2 > {rsquare}\" --out {outputPrefix} --pheno {phenoName} "
-               f"--threads {threads} --glm hide-covar")
+    command = (f"{plink2} --pfile {pvar}  --covar-variance-standardize --ci 0.95 "
+               f"--covar {covarFile} --covar-name {covarName} "
+               f"--extract-if-info \"R2 > {rsquare}\" --out {outputPrefix} "
+               f"--pheno {covarFile} --pheno-name {phenoName} --threads {threads} --glm hide-covar")
 
     if firth:
         command = command + " firth"
@@ -146,3 +128,18 @@ def execute(commandLine, logFile):
     logFile.write(f"\t{commandLine}:\n")
     logFile.write(f"\n")
     logFile.write("=================================================================================================\n")
+
+
+
+def stepwiseSelection(covarFile, pheno, folder,name, selectModel, included):
+    os.system(f"Rscript {selectModel} {covarFile} {pheno} {included} {folder}/{name}_Step")
+
+    fileModel = open(f"{folder}/{name}_Step_variables.tsv")
+
+    model = ""
+    for line in fileModel:
+        model= f"{model} {line.strip()}"
+
+    print(f"The Stepwise gave me the model {pheno} ~ {model.replace(' ', '+')}")
+
+    return model
