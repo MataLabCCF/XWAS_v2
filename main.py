@@ -188,7 +188,8 @@ if __name__ == '__main__':
                         default="")
     pcaArg.add_argument('--PCAOutlier', help='PCA to be calculated to outlier removal. (default = 1) \n'
                                       '1- X-PCA\n2- Projected X-PCA\n3- Autosomal PCA\n4- Projected autosomal PCA\n'
-                                      '5- X-PCA + Autosomal PCA\n 6- Projected X-PCA + Projected Autosomal\n',
+                                      '5- X-PCA + Autosomal PCA\n 6- Projected X-PCA + Projected Autosomal\n'
+                                      '0- No outlier removal\n',
                         required=False, default="1")
     pcaArg.add_argument('--PCARegression', help='PCA to be calculated to regression. (default = 1) \n'
                                              '1- X-PCA\n2- Autosomal PCA\n',
@@ -230,9 +231,11 @@ if __name__ == '__main__':
 
         outlierFolder = f"{args.folder}/Outliers/"
         createFolder(f"{outlierFolder}")
-        outlierList = detectOutliers(args.PCAOutlier, bfileFemale, bfileMale, bfileAutoFemale, bfileAutoMale,
+        if args.PCAOutlier != "0":
+            outlierList = detectOutliers(args.PCAOutlier, bfileFemale, bfileMale, bfileAutoFemale, bfileAutoMale,
                                      args.XRef, args.AutosomalRef, args.gcta, args.plink1, outlierFolder, args.threads, logFile)
-
+        else:
+            outlierList = []
 
 
         # We will not use projected PCA to GWAS analysis because we do not have good references for our population. Here we will implement X-PCA or autosomal PCA
