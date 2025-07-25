@@ -132,7 +132,7 @@ def execute(commandLine, logFile):
 
 
 def stepwiseSelection(covarFile, pheno, folder,name, selectModel, included):
-    os.system(f"Rscript {selectModel} {covarFile} {pheno} {included} {folder}/{name}_Step")
+    os.system(f"Rscript {selectModel} {covarFile} {pheno} . {folder}/{name}_Step")
 
     fileModel = open(f"{folder}/{name}_Step_variables.tsv")
 

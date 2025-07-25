@@ -48,9 +48,18 @@ def countBim(filePrefix):
 
 def convertVCFToBfile(VCF, name, folder, plink1, logFile):
     outputPrefix = f"{folder}/{name}"
-    commandLine = f"{plink1} --vcf {VCF} --make-bed --out {outputPrefix} --double-id --keep-allele-order"
-
+    commandLine = f"{plink1} --vcf {VCF} --make-bed --out {outputPrefix} --keep-allele-order --double-id"
     executePlink1(commandLine, "bfile", outputPrefix, logFile)
+
+    #commandLine = f"mv {outputPrefix}.fam {outputPrefix}_BACKUP.fam"
+    #os.system(commandLine)
+
+    #fileIn = open(f"{outputPrefix}_BACKUP.fam")
+    #fileOut = open(f"{outputPrefix}.fam", "w")
+    #for line in fileIn:
+    #    split = line.strip().split()
+    #    fileOut.write(f"{split[1]}\t{split[1]}\t{split[2]}\t{split[3]}\t{split[4]}\t{split[5]}\n")
+    #fileOut.close()
 
     return outputPrefix
 
