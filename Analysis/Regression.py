@@ -120,7 +120,6 @@ def runRegressionPlink2(pvar, covarFile, model, rsquare, firth, phenoName, threa
 
     return outputPrefix
 
-
 def execute(commandLine, logFile):
     os.system(commandLine)
 
