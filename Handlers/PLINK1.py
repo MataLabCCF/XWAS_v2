@@ -94,7 +94,8 @@ def mergeCommonFiles(file1, file2, name, folder, plink1, logFile):
 
 def imputeSex(bfile, name, folder, plink1, logFile):
     outputPrefix = f"{folder}/{name}"
-    commandLine = f"{plink1} --bfile {bfile} --make-bed --out {outputPrefix} --impute-sex 0.4 0.8"
+    commandLine = (f"{plink1} --bfile {bfile} --make-bed --out {outputPrefix} --split-x hg38"
+                   f" --impute-sex 0.4 0.8")
 
     executePlink1(commandLine, "bfile", outputPrefix, logFile)
 
