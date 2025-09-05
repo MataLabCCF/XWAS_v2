@@ -1,0 +1,37 @@
+#All lines that starts with "#" are considered comments, so it
+#will be ignored
+
+
+#Inputs
+Input	X	Typed	/home/path/target/genotypedX.vcf.gz
+Input	Autosomal	Typed	/home/path/target/genotypedAuto.vcf.gz
+Input	X	Imputed	/home/path/target/imputedX.vcf.gz
+
+#For covar we request the covar file and the phenotype column name
+Input	covar	COVAR.txt	disease
+
+#Reference
+Reference	X	/home/path/ref/refX.vcf.gz
+#Reference	Autosomal	/home/path/ref/refAuto.vcf.gz
+
+#PCA Outliers
+#Call	Data	Ref?
+Outlier	X	No
+Outlier	X	Yes
+Outlier	Autosomal	No
+Outlier Autosomal	Yes
+
+#PCA regression
+#PCA	X
+#PCA	Autosomal
+
+#Regression model
+#Model	Script	./XWAS_v2/Analysis/selectModel.R
+Model	AGE+SEX+PC1+PC2+PC3+PC4+PC5+PC6+PC7+PC8+PC9+PC10
+
+#Programs
+Programs	Plink1	plink
+Programs	Plink2	plink2
+Programs	GCTA	/home/path/programs/gcta64
+Programs	GWAMA	/home/path/programs/GWAMA
+Programs	R	Rscript
