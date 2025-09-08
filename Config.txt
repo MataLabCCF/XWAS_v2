@@ -1,6 +1,4 @@
-#All lines that starts with "#" are considered comments, so it
-#will be ignored
-
+#All lines that starts with "#" are considered comments, so it will be ignored
 
 #Inputs
 Input	X	Typed	/home/path/target/genotypedX.vcf.gz
@@ -15,11 +13,14 @@ Reference	X	/home/path/ref/refX.vcf.gz
 #Reference	Autosomal	/home/path/ref/refAuto.vcf.gz
 
 #PCA Outliers
-#Call	Data	Ref?
 Outlier	X	No
 Outlier	X	Yes
 Outlier	Autosomal	No
 Outlier Autosomal	Yes
+
+#Number of PCs
+Outlier PC  X   5
+Outlier PC  Autosomal   6
 
 #PCA regression
 #PCA	X

@@ -10,8 +10,8 @@ if __name__ == '__main__':
 
     data = parser.add_argument_group("Input arguments")
     data.add_argument('-c', '--config', help='Path to configuration file', required=True)
-    data.add_argument('-t', '--threads', help='Number of threads to be used by PLINK and GCTA (default = 1)', required=False, default= 1)
-    data.add_argument('-m', '--mem', help='Memory parameter used by PLINK (default = None, Plink will use 50% of computer RAM memory', required=False, default="")
+    data.add_argument('-t', '--threads', help='Number of threads to be used by GCTA (default = 1)', required=False, default= 1)
+    #data.add_argument('-m', '--mem', help='Memory parameter used by PLINK (default = None, Plink will use 50%% of computer RAM memory', required=False, default="")
 
     out = parser.add_argument_group("Output arguments")
     out.add_argument('-f', '--folder', help='Folder name', required=True)
