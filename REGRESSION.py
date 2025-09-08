@@ -115,13 +115,13 @@ def runRegressionPlink2(pvar, covarFile, rsquare, firth, phenoName, covars, fold
     outputPrefix = f"{outputFolder}/{name}"
 
     command = (f"{plink2} --pfile {pvar}  --covar-variance-standardize --ci 0.95 "
-               f"--covar {covarFile} --covar-name {covars} "
-               f"--extract-if-info \"R2 > {rsquare}\" --out {outputPrefix} "
+               f"--covar {covarFile} --covar-name {covars} --out {outputPrefix} "
                f"--pheno {covarFile} --pheno-name {phenoName} --threads {threads} --glm hide-covar")
 
     if firth:
         command = command + " firth"
-
+    if rsquare != "":
+        command = command + f" --extract-if-info \"R2 > {rsquare}\""
     execute(command, logFile, debug)
 
     return outputPrefix

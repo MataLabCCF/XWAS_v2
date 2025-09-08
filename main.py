@@ -13,6 +13,10 @@ if __name__ == '__main__':
     data.add_argument('-t', '--threads', help='Number of threads to be used by GCTA (default = 1)', required=False, default= 1)
     #data.add_argument('-m', '--mem', help='Memory parameter used by PLINK (default = None, Plink will use 50%% of computer RAM memory', required=False, default="")
 
+    data = parser.add_argument_group("Regression arguments")
+    data.add_argument('-r', '--rsquare', help='Imputation r2 cutoff (default: No cutoff)', required=False, default = "")
+    data.add_argument('-F', '--firth', help='Force firth regression on PLINK2', required=False, default=False, action="store_true")
+
     out = parser.add_argument_group("Output arguments")
     out.add_argument('-f', '--folder', help='Folder name', required=True)
 
@@ -67,12 +71,11 @@ if __name__ == '__main__':
     pfileFemale = convertVCFToPFile(covarFileFemale, config, nonOutlierFolder, "FemaleData", updateFemale, logFile, debug)
     pfileBoth = convertVCFToPFile(covarFileBoth, config, nonOutlierFolder, "BothData",updateBoth, logFile, debug)
 
-    rsquare = "0.5"
-    firth = True
-    regressionMale = runRegressionPlink2(pfileMale, covarFileMale, rsquare, firth, pheno, covarListMale, args.folder, "RegressionMale", config, args.threads, logFile, debug)
-    regressionFemale = runRegressionPlink2(pfileFemale, covarFileFemale, rsquare, firth, pheno, covarListFemale, args.folder, "RegressionFemale", config, args.threads, logFile, debug)
-    regressionBoth = runRegressionPlink2(pfileBoth, covarFileBoth, rsquare, firth, pheno, covarListBoth, args.folder, "RegressionBoth", config, args.threads, logFile, debug)
 
-    gwamaMetaAnalysis(regressionFemale, regressionMale, pfileFemale, pfileMale, firth, "FemaleMale", f"{args.folder}/Results", config, logFile, debug)
+    regressionMale = runRegressionPlink2(pfileMale, covarFileMale, args.rsquare, args.firth, pheno, covarListMale, args.folder, "RegressionMale", config, args.threads, logFile, debug)
+    regressionFemale = runRegressionPlink2(pfileFemale, covarFileFemale, args.rsquare, args.firth, pheno, covarListFemale, args.folder, "RegressionFemale", config, args.threads, logFile, debug)
+    regressionBoth = runRegressionPlink2(pfileBoth, covarFileBoth, args.rsquare, args.firth, pheno, covarListBoth, args.folder, "RegressionBoth", config, args.threads, logFile, debug)
+
+    gwamaMetaAnalysis(regressionFemale, regressionMale, pfileFemale, pfileMale, args.firth, "FemaleMale", f"{args.folder}/Results", config, logFile, debug)
 
     logFile.close()

@@ -201,7 +201,7 @@ This section consists of three columns:
 Because of the Config file, the command line is simple:
 
 ```
-usage: main.py [-h] -c CONFIG [-t THREADS] -f FOLDER
+usage: main.py [-h] -c CONFIG [-t THREADS] [-r RSQUARE] [-F] -f FOLDER
 
 Mata Lab XWAS v2.1
 
@@ -214,14 +214,20 @@ Input arguments:
   -t THREADS, --threads THREADS
                         Number of threads to be used by GCTA (default = 1)
 
+Regression arguments:
+  -r RSQUARE, --rsquare RSQUARE
+                        Imputation r2 cutoff (default: No cutoff)
+  -F, --firth           Force firth regression on PLINK2
+
 Output arguments:
   -f FOLDER, --folder FOLDER
+                        Folder name
 ```
 
 **Example:**
 
 ```commandline
-python main.py -c Config.txt -t 4 -f /home/path/XWAS_results
+python main.py -c Config.txt -t 4 -f /home/path/XWAS_results --firth --rsquare 0.6
 ```
 
 ## Future changes
