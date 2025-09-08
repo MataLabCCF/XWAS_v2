@@ -74,3 +74,5 @@ if __name__ == '__main__':
     regressionBoth = runRegressionPlink2(pfileBoth, covarFileBoth, rsquare, firth, pheno, covarListBoth, args.folder, "RegressionBoth", config, args.threads, logFile, debug)
 
     gwamaMetaAnalysis(regressionFemale, regressionMale, pfileFemale, pfileMale, firth, "FemaleMale", f"{args.folder}/Results", config, logFile, debug)
+
+    logFile.close()

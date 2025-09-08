@@ -224,7 +224,12 @@ Output arguments:
 python main.py -c Config.txt -t 4 -f /home/path/XWAS_results
 ```
 
- ## Acknowledgements
+## Future changes
+- Implement the RAM limiter to PLINK (GCTA does not have a flag for it)
+- Implement the changes to continuous variables
+
+
+## Acknowledgements
 
 This work is supported by NIH Grant R01 1R01NS112499-01A1, MJFF Grant ID: 18298, ASAP-GP2 and Parkinson's Foundation
 
