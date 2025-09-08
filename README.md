@@ -224,3 +224,11 @@ Output arguments:
 python main.py -c Config.txt -t 4 -f /home/path/XWAS_results
 ```
 
+ ## Acknowledgements
+
+This work is supported by NIH Grant R01 1R01NS112499-01A1, MJFF Grant ID: 18298, ASAP-GP2 and Parkinson's Foundation
+
+ 
+### Contact
+ 
+ Developer: Thiago Peixoto Leal. PhD (PEIXOTT@ccf.org or thpeixotol@hotmail.com)
